@@ -12,5 +12,6 @@
 #r "FunScript.TypeScript.Binding.jquery.dll"
 #r "FunScript.TypeScript.Binding.lib.dll"
 #r "FunScript.TypeScript.Binding.node.dll"
+#r "Ionide.Helpers.dll"
 
 #endif

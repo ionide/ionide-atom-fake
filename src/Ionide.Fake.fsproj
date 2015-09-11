@@ -33,11 +33,6 @@
   </PropertyGroup>
   <Import Project="$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\3.1\Framework\v4.0\Microsoft.FSharp.Targets" />
   <ItemGroup>
-
-    <Compile Include="Helpers\Bindings.fs" />
-    <Compile Include="Helpers\ViewHelpers.fs" />
-    <Compile Include="Helpers\ListViewHelpers.fs" />
-    <Compile Include="Helpers\ProcessHelpers.fs" />
     <Compile Include="fake.fs" />
     <Compile Include="main.fs" />
     <None Include="atom-bindings.fsx" />
@@ -61,9 +56,12 @@
     <Reference Include="FunScript.TypeScript.Binding.node">
       <HintPath>..\lib\FunScript.TypeScript.Binding.node.dll</HintPath>
     </Reference>
+    <Reference Include="Ionide.Helpers">
+      <HintPath>..\lib\Ionide.Helpers.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <Choose>
-    <When Condition="($(TargetFrameworkIdentifier) == '.NETFramework' And ($(TargetFrameworkVersion) == 'v4.0' Or $(TargetFrameworkVersion) == 'v4.5' Or $(TargetFrameworkVersion) == 'v4.5.1' Or $(TargetFrameworkVersion) == 'v4.5.2' Or $(TargetFrameworkVersion) == 'v4.5.3' Or $(TargetFrameworkVersion) == 'v4.6')) Or ($(TargetFrameworkIdentifier) == 'MonoAndroid') Or ($(TargetFrameworkIdentifier) == 'MonoTouch')">
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETFramework' And ($(TargetFrameworkVersion) == 'v4.0' Or $(TargetFrameworkVersion) == 'v4.5' Or $(TargetFrameworkVersion) == 'v4.5.1' Or $(TargetFrameworkVersion) == 'v4.5.2' Or $(TargetFrameworkVersion) == 'v4.5.3' Or $(TargetFrameworkVersion) == 'v4.6')">
       <ItemGroup>
         <Reference Include="FunScript.Interop">
           <HintPath>..\packages\FunScript\lib\net40\FunScript.Interop.dll</HintPath>

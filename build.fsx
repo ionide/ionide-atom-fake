@@ -16,10 +16,6 @@ open Fake.ZipHelper
 #else
 
 #load "src/atom-bindings.fsx"
-#load "src/Helpers/Bindings.fs"
-#load "src/Helpers/ViewHelpers.fs"
-#load "src/Helpers/ListViewHelpers.fs"
-#load "src/Helpers/ProcessHelpers.fs"
 #load "src/fake.fs"
 #load "src/main.fs"
 
