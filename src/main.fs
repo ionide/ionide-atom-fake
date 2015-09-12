@@ -11,7 +11,7 @@ let root = __SOURCE_DIRECTORY__
 // Translate the type given as #1 using module name #2
 // and save the result to a file specified in #3
 let atomModules =
-  [ typeof<Ionide.Fake.Fake>, "AtomFSharpPaket" ]
+  [ typeof<Ionide.Fake.Fake>, "IonidePaket" ]
 
 // --------------------------------------------------------------------------------------
 // Compile F# type to an atom module

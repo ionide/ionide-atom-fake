@@ -12,6 +12,7 @@ open FunScript.TypeScript.text_buffer
 open Atom
 open Atom.FSharp
 
+[<ReflectedDefinition>]
 module FakeService =
     type BuildData = {Name : string; Start : DateTime; mutable End : DateTime option; mutable Output : string; mutable TextEditor : IEditor option}
 
@@ -91,7 +92,7 @@ module FakeService =
         let m = matches |> Array.map(fun m -> {ListView.data = m.Groups.[1].Value} :> obj)
         model.setItems m |> ignore
         ()
-        )) 
+        ))
 
     let private BuildDefault () =
         let packageDescription = {ListView.data = "" }
@@ -155,7 +156,7 @@ type Fake() =
 
 
     member x.activate(state:obj) =
-
+        FakeService.activate ()
         ()
 
     member x.deactivate() =

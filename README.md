@@ -1,6 +1,5 @@
 # Ionide-FAKE
 
-
 ## Contributing and copyright
 
 The project is hosted on [GitHub](https://github.com/ionide/ionide-fake) where you can [report issues](https://github.com/ionide/ionide-fake/issues), fork
