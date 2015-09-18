@@ -1,0 +1,16 @@
+{
+  "name": "ionide-fake",
+  "main": "./lib/fake",
+  "version": "0.0.0",
+  "description": "Running FAKE build scripts not leaving an editor.",
+  "repository": "https://github.com/Ionide/ionide-fake",
+  "license": "Appache 2.0",
+  "engines": {
+    "atom": ">=0.174.0 <2.0.0"
+  },
+  "dependencies": {
+    "jquery": "2.1.3",
+    "atom-space-pen-views": "2.0.5",
+    "path": "*"
+  }
+}
