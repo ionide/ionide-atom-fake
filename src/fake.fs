@@ -1,7 +1,7 @@
 [<ReflectedDefinition>]
 module Ionide.Fake
 
-open System
+open System 
 open System.Text.RegularExpressions
 open FunScript
 open FunScript.TypeScript

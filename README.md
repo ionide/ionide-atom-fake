@@ -1,6 +1,6 @@
 # Ionide-FAKE
 
-It's part of [Ionide](ionide.io) plugin suite.
+It's part of [Ionide](http://ionide.io) plugin suite.
 Running FAKE build scripts not leaving an editor.
 
 ## Features
