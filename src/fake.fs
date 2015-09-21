@@ -1,7 +1,7 @@
 [<ReflectedDefinition>]
 module Ionide.Fake
 
-open System 
+open System
 open System.Text.RegularExpressions
 open FunScript
 open FunScript.TypeScript
@@ -16,7 +16,12 @@ open Atom.FSharp
 module FakeService =
     type BuildData = {Name : string; Start : DateTime; mutable End : DateTime option; mutable Output : string; mutable TextEditor : IEditor option}
 
-    let mutable private File : (string * string) option = None
+    let mutable linuxPrefix = ""
+    let mutable command = ""
+    let mutable script = ""
+    let mutable parameters : string[]= [||]
+
+    //let mutable private File : (string * string) option = None
     let mutable private taskListView : (atom.SelectListView * IPanel) option = None
     let mutable private buildListView : (atom.SelectListView * IPanel) option = None
     let mutable private BuildList = ResizeArray()
@@ -29,26 +34,25 @@ module FakeService =
             "<li></li>" |> jq
 
     let private startBuild (packageDescription :  ListView.ItemDescription) =
-        File |> Option.iter( fun (build, fake) ->
-            let data = {Name = packageDescription.data; Start = DateTime.Now; End = None; Output = ""; TextEditor = None}
-            BuildList.Add data
-            let fakeProcess = Process.spawnWithNotifications build "sh" packageDescription.data
-            fakeProcess.on("exit",unbox<Function>(fun _ -> data.End <- Some DateTime.Now)) |> ignore
-            fakeProcess.stdout.on("data", unbox<Function>(fun e ->
-                data.Output <- data.Output + e.ToString()
-                data.TextEditor |> Option.iter (fun te ->
-                    let b = te.getBuffer()
-                    e.ToString() |> b.append |> ignore
-                    )
-                )) |> ignore
-            fakeProcess.stderr.on("data", unbox<Function>(fun e ->
-                data.Output <- data.Output + e.ToString()
-                data.TextEditor |> Option.iter (fun te ->
-                    let b = te.getBuffer()
-                    e.ToString() |> b.append |> ignore
+        let data = {Name = packageDescription.data; Start = DateTime.Now; End = None; Output = ""; TextEditor = None}
+        BuildList.Add data
+        let fakeProcess = Process.spawnWithNotifications command linuxPrefix packageDescription.data
+        fakeProcess.on("exit",unbox<Function>(fun _ -> data.End <- Some DateTime.Now)) |> ignore
+        fakeProcess.stdout.on("data", unbox<Function>(fun e ->
+            data.Output <- data.Output + e.ToString()
+            data.TextEditor |> Option.iter (fun te ->
+                let b = te.getBuffer()
+                e.ToString() |> b.append |> ignore
                 )
             )) |> ignore
-        )
+        fakeProcess.stderr.on("data", unbox<Function>(fun e ->
+            data.Output <- data.Output + e.ToString()
+            data.TextEditor |> Option.iter (fun te ->
+                let b = te.getBuffer()
+                e.ToString() |> b.append |> ignore
+            )
+        )) |> ignore
+ 
         ()
 
     let private registerTaskList () =
@@ -81,22 +85,39 @@ module FakeService =
         )
         ListView.regiterListView stopChangingCallback cancelledCallback confirmedCallback viewForItem false
 
-    let private BuildTask () =
-        taskListView |> Option.iter(fun (model, view) ->
-        File |> Option.iter(fun (build, fake) ->
-        view.show()
-        model.focusFilterEditor() |> ignore
-        let script = fake |> Globals.readFileSync
-                          |> fun n -> n.toString()
-        let matches = Regex.Matches(script, "Target \"([\\w.]+)\"") |> Seq.cast<Match> |> Seq.toArray
-        let m = matches |> Array.map(fun m -> {ListView.data = m.Groups.[1].Value} :> obj)
-        model.setItems m |> ignore
+    let loadParameters () =
+        let p = Globals.atom.project.getPaths().[0]
+        linuxPrefix <- Settings.loadOrDefault (fun s -> s.Fake.linuxPrefix ) "sh"
+        command <- Settings.loadOrDefault (fun s -> p + "/" + s.Fake.command ) (if Process.isWin () then p + "/" + "build.cmd" else p + "/" + "build.sh")
+        script <- Settings.loadOrDefault (fun s -> p + "/" + s.Fake.build )  (p + "/" + "build.fsx")
         ()
-        ))
+
+    let private FAKENotFound () =
+        Process.notice (ref None) true "FAKE error" "FAKE script not found"
+
+    let private BuildTask () =
+        loadParameters ()
+        if Globals.existsSync script |> not || Globals.existsSync command |> not then
+            FAKENotFound ()
+        else
+            taskListView |> Option.iter(fun (model, view) ->
+            view.show()
+            model.focusFilterEditor() |> ignore
+            let script = script |> Globals.readFileSync
+                                |> fun n -> n.toString()
+            let matches = Regex.Matches(script, "Target \"([\\w.]+)\"") |> Seq.cast<Match> |> Seq.toArray
+            let m = matches |> Array.map(fun m -> {ListView.data = m.Groups.[1].Value} :> obj)
+            model.setItems m |> ignore
+            ()
+        )
 
     let private BuildDefault () =
-        let packageDescription = {ListView.data = "" }
-        startBuild packageDescription
+        loadParameters ()
+        if Globals.existsSync script |> not || Globals.existsSync command |> not  then
+            FAKENotFound ()
+        else
+            let packageDescription = {ListView.data = "" }
+            startBuild packageDescription
 
     let private ShowBuildList () =
         buildListView |> Option.iter(fun (model, view) ->
@@ -117,38 +138,13 @@ module FakeService =
             ()
         )
 
-    let private FAKENotFound () =
-        Process.notice (ref None) true "FAKE error" "FAKE script not found"
 
     let activate () =
         taskListView <- registerTaskList () |> Some
         buildListView <- registerBuildList () |> Some
-        let p = Globals.atom.project.getPaths().[0]
-        let proj (ex : NodeJS.ErrnoException) (arr : string array) =
-            let ext = if Process.isWin() then "cmd" else "sh"
-            let projExist = if JS.isDefined arr then arr |> Array.tryFind(fun a -> a.Split('.') |> fun n -> if JS.isDefined n then n.[n.Length - 1] = ext else false)
-                            else None
-            match projExist with
-            | Some a ->
-                let path = p + "/" + a
-                let file = path |> Globals.readFileSync
-                                |> fun n -> n.toString()
-                let regex = Regex.Matches(file, "FAKE.exe.* ([\w]+\.fsx)")
-                if regex.Count > 0 then
-                    [0 .. regex.Count - 1] |> Seq.iter (fun i ->
-                        if File.IsNone then
-                            let build = p + "/" + regex.[i].Groups.[1].Value
-                            if Globals.existsSync build then
-                                File <- Some (path, build )
-                                Globals.atom.commands.add("atom-workspace", "FAKE:Build", BuildTask |> unbox<Function>) |> ignore
-                                Globals.atom.commands.add("atom-workspace", "FAKE:Build-Default", BuildDefault |> unbox<Function>) |> ignore
-                                Globals.atom.commands.add("atom-workspace", "FAKE:Show-Builds", ShowBuildList |> unbox<Function>) |> ignore
-                    )
-                else
-                    Globals.atom.commands.add("atom-workspace", "FAKE: Build", FAKENotFound |> unbox<Function>) |> ignore
-            | None -> Globals.atom.commands.add("atom-workspace", "FAKE: Build", FAKENotFound |> unbox<Function>) |> ignore
-
-        if JS.isDefined p then Globals.readdir(p, System.Func<NodeJS.ErrnoException, string array, unit>(proj))
+        Globals.atom.commands.add("atom-workspace", "FAKE:Build", BuildTask |> unbox<Function>) |> ignore
+        Globals.atom.commands.add("atom-workspace", "FAKE:Build-Default", BuildDefault |> unbox<Function>) |> ignore
+        Globals.atom.commands.add("atom-workspace", "FAKE:Show-Builds", ShowBuildList |> unbox<Function>) |> ignore
 
 
 
