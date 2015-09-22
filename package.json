@@ -1,7 +1,7 @@
 {
   "name": "ionide-fake",
   "main": "./lib/fake",
-  "version": "0.0.0",
+  "version": "1.1.0",
   "description": "Running FAKE build scripts not leaving an editor.",
   "repository": "https://github.com/Ionide/ionide-fake",
   "license": "Appache 2.0",
