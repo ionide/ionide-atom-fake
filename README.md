@@ -1,18 +1,17 @@
 # Ionide-FAKE
 
-It's part of [Ionide](http://ionide.io) plugin suite.
-Running FAKE build scripts not leaving an editor.
+Ionide-FAKE is part of the [Ionide](http://ionide.io) plugin suite, used for running FAKE build scripts without leaving an editor.
 
 ## Features
 
-- Running any build target defined FAKE build script
+- Run any build target defined in yoru project's FAKE build script
 - Panel in which you can display output of any FAKE build run in current Atom session ( including currently running builds)
 
 ## Configuration
 
-Since version `1.1.0` `ionide-fake` allows user to override default conventions used to find and run FAKE builds. To do so You need to create `.ionide` file in the root folder of Your project opened by Atom. Configuration is using [TOML](https://github.com/toml-lang/toml) language.
+Since version `1.1.0`, `ionide-fake` allows the user to override the default conventions used to find and run FAKE builds. To do so You need to create an `.ionide` file in the root folder of Your project opened by Atom. The configuration file uses the [TOML](https://github.com/toml-lang/toml) language.
 
-Here is default (those values are used if `.ionide` files doesn't exist or some entry is missing) configuration file
+Here is the default configuration values used if the `.ionide` file doesn't exist or some entry is missing:
 
 ```TOML
 [Fake]
@@ -27,7 +26,7 @@ build = "build.fsx"
 
 * Build - FAKE build script, which is parsed to obtain list of possible builds - usually `build.fsx`, `fake.fsx` 
 
-## Build
+## Build Instructions
 
 * Clone this repository
 * Checkout `develop` branch
@@ -35,13 +34,13 @@ build = "build.fsx"
 * Go to `release` folder and run `apm link` to create symbolic link between plugin and Atom's plugins folder
 * Run Atom
 
-## Contributing and copyright
+## Contributing and Copyright
 
-The project is hosted on [GitHub](https://github.com/ionide/ionide-fake) where you can [report issues](https://github.com/ionide/ionide-fake/issues), fork
-the project and submit pull requests to `develop` branch.
+The project is hosted at [GitHub](https://github.com/ionide/ionide-fake) where you can [report issues](https://github.com/ionide/ionide-fake/issues), fork
+the project, and submit pull requests to `develop` branch.
 
-The library is available under [MIT license](https://github.com/ionide/ionide-fake/blob/master/LICENSE.md), which allows modification and
-redistribution for both commercial and non-commercial purposes.
+The library is released under the [MIT license](https://github.com/ionide/ionide-fake/blob/master/LICENSE.md), 
+which allows modification and redistribution for both commercial and non-commercial purposes.
 
 ## Code of Conduct
 
