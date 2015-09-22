@@ -24,7 +24,7 @@ build = "build.fsx"
 
 * Command - command executed as build taking build name as parameter - usually `build.cmd`, `build.sh`, `build.ps1`
 
-* Build - FAKE build script, which is parsed to obtain list of possible builds - usually `build.fsx`, `fake.fsx` 
+* Build - FAKE build script, which is parsed to obtain list of possible builds - usually `build.fsx`, `fake.fsx`
 
 ## Build Instructions
 
@@ -39,7 +39,7 @@ build = "build.fsx"
 The project is hosted at [GitHub](https://github.com/ionide/ionide-fake) where you can [report issues](https://github.com/ionide/ionide-fake/issues), fork
 the project, and submit pull requests to `develop` branch.
 
-The library is released under the [MIT license](https://github.com/ionide/ionide-fake/blob/master/LICENSE.md), 
+The library is released under the [MIT license](https://github.com/ionide/ionide-fake/blob/master/LICENSE.md),
 which allows modification and redistribution for both commercial and non-commercial purposes.
 
 ## Code of Conduct
