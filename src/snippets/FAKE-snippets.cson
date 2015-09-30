@@ -46,10 +46,10 @@
             let pinfo = ProcessStartInfo(cmd,args)
             pinfo.WorkingDirectory <- dir; pinfo.UseShellExecute <- false; pinfo.RedirectStandardOutput <- true
             let proc = Process.Start(pinfo)
-            proc.StandardOutput.ReadToEnd() |> printfn "< %s >\n%s" cmd; proc.WaitForExit()
+            proc.StandardOutput.ReadToEnd() |> printfn "< %s >\\\\n%s" cmd; proc.WaitForExit()
 
-        run @".paket\paket.bootstrapper.exe" "" ""
-        run @".paket\paket.exe" "restore -f" ""
+        run @".paket\\\\paket.bootstrapper.exe" "" ""
+        run @".paket\\\\paket.exe" "restore -f" ""
 
         //-------------------------
         // FAKE Targets
