@@ -14,7 +14,7 @@ open Atom.FSharp
 
 [<ReflectedDefinition>]
 module FakeService =
-    type BuildData = {Name : string; Start : DateTime; mutable End : DateTime option; mutable Output : string; mutable TextEditor : IEditor option}
+    type BuildData = {Name : string; Start : DateTime; mutable End : DateTime option; mutable Output : string; mutable TextEditor : IEditor option; Process : ChildProcess}
 
     let mutable linuxPrefix = ""
     let mutable command = ""
@@ -24,6 +24,7 @@ module FakeService =
     //let mutable private File : (string * string) option = None
     let mutable private taskListView : (atom.SelectListView * IPanel) option = None
     let mutable private buildListView : (atom.SelectListView * IPanel) option = None
+    let mutable private cancelListView : (atom.SelectListView * IPanel) option = None
     let mutable private BuildList = ResizeArray()
 
 
@@ -34,9 +35,9 @@ module FakeService =
             "<li></li>" |> jq
 
     let private startBuild (packageDescription :  ListView.ItemDescription) =
-        let data = {Name = packageDescription.data; Start = DateTime.Now; End = None; Output = ""; TextEditor = None}
-        BuildList.Add data
         let fakeProcess = Process.spawnWithNotifications command linuxPrefix packageDescription.data
+        let data = {Name = packageDescription.data; Start = DateTime.Now; End = None; Output = ""; TextEditor = None; Process = fakeProcess}
+        BuildList.Add data
         fakeProcess.on("exit",unbox<Function>(fun _ -> data.End <- Some DateTime.Now)) |> ignore
         fakeProcess.stdout.on("data", unbox<Function>(fun e ->
             data.Output <- data.Output + e.ToString()
@@ -85,7 +86,23 @@ module FakeService =
         )
         ListView.registerListView stopChangingCallback cancelledCallback confirmedCallback viewForItem false
 
-    let loadParameters () =
+    let private registerCancelList () =
+        let stopChangingCallback (ev : IEditor) (lv : atom.SelectListView) = fun () -> ()
+        let cancelledCallback = Func<_>(fun _ -> cancelListView |> Option.iter(fun (model, view) ->  view.hide()) :> obj)
+        let confirmedCallback = unbox<Func<_, _>> (fun (buildDescription : ListView.ItemDescription) ->
+            cancelListView |> Option.iter (fun (model, view) -> view.hide())
+            let build = BuildList |> Seq.find(fun n ->
+                let dateString = n.Start.ToShortDateString().Replace("\\",".").Replace("/",".")
+                let timeString = n.Start.ToShortTimeString().Replace("\\",".").Replace("/", ".")
+                let desc = sprintf "%s - %s %s" n.Name dateString timeString
+                desc = buildDescription.data)
+            build.Process.kill ()
+            build.End <- Some DateTime.Now
+        )
+        ListView.registerListView stopChangingCallback cancelledCallback confirmedCallback viewForItem false
+
+
+    let private loadParameters () =
         let p = Globals.atom.project.getPaths().[0]
         linuxPrefix <- Settings.loadOrDefault (fun s -> s.Fake.linuxPrefix ) "sh"
         command <- Settings.loadOrDefault (fun s -> p + "/" + s.Fake.command ) (if Process.isWin () then p + "/" + "build.cmd" else p + "/" + "build.sh")
@@ -138,14 +155,34 @@ module FakeService =
             ()
         )
 
+    let private ShowCancelList () =
+        cancelListView |> Option.iter(fun (model, view) ->
+            view.show()
+            model.focusFilterEditor() |> ignore
+            let m = BuildList
+                    |> Seq.filter (fun n -> n.End.IsNone)
+                    |> Seq.sortBy(fun n -> n.Start)
+                    |> Seq.map(fun n ->
+                        let dateString = n.Start.ToShortDateString().Replace("\\",".").Replace("/",".")
+                        let timeString = n.Start.ToShortTimeString().Replace("\\",".").Replace("/", ".")
+
+                        let name = sprintf "%s - %s %s" n.Name dateString timeString
+                        {ListView.data = name } :> obj)
+                    |> Seq.toArray
+                    |> Array.rev
+
+            model.setItems m |> ignore
+            ()
+        )
 
     let activate () =
         taskListView <- registerTaskList () |> Some
         buildListView <- registerBuildList () |> Some
+        cancelListView <- registerCancelList () |> Some
         Globals.atom.commands.add("atom-workspace", "FAKE:Build", BuildTask |> unbox<Function>) |> ignore
         Globals.atom.commands.add("atom-workspace", "FAKE:Build-Default", BuildDefault |> unbox<Function>) |> ignore
         Globals.atom.commands.add("atom-workspace", "FAKE:Show-Builds", ShowBuildList |> unbox<Function>) |> ignore
-
+        Globals.atom.commands.add("atom-workspace", "FAKE:Cancel Build", ShowCancelList |> unbox<Function>) |> ignore
 
 
 type Fake() =

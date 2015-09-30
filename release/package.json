@@ -2,7 +2,7 @@
   "name": "ionide-fake",
   "main": "./lib/fake",
   "version": "0.0.0",
-  "description": "Running FAKE build scripts not leaving an editor.",
+  "description": "Run FAKE build scripts and targets with Atom commands",
   "repository": "https://github.com/Ionide/ionide-fake",
   "license": "Appache 2.0",
   "engines": {
