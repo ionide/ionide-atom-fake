@@ -1,7 +1,7 @@
 {
   "name": "ionide-fake",
   "main": "./lib/fake",
-  "version": "0.0.0",
+  "version": "1.2.1",
   "description": "Run FAKE build scripts and targets with Atom commands",
   "repository": "https://github.com/Ionide/ionide-fake",
   "license": "Appache 2.0",
