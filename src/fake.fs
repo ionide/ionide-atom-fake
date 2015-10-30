@@ -96,7 +96,11 @@ module FakeService =
                 let timeString = n.Start.ToShortTimeString().Replace("\\",".").Replace("/", ".")
                 let desc = sprintf "%s - %s %s" n.Name dateString timeString
                 desc = buildDescription.data)
-            build.Process.kill ()
+            if Process.isWin () then
+                Process.spawnSame "taskkill" ("/pid " + build.Process.pid.ToString() + " /f /t")
+                |> ignore
+            else
+                build.Process.kill ()
             build.End <- Some DateTime.Now
         )
         ListView.registerListView stopChangingCallback cancelledCallback confirmedCallback viewForItem false
