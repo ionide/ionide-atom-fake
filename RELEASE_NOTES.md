@@ -1,3 +1,6 @@
+### 1.2.2 - 02.11.2015
+* Update Readme
+
 ### 1.2.1 - 30.10.2015
 * Fix FAKE Cancel on Windows
 

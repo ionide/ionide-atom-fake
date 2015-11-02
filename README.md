@@ -1,4 +1,4 @@
-# Ionide-FAKE 
+# Ionide-FAKE
 
 Ionide-FAKE is part of the [Ionide](http://ionide.io) plugin suite, used for running FAKE build scripts without leaving an editor.
 
@@ -44,9 +44,3 @@ the project, and submit pull requests to `develop` branch.
 
 The library is released under the [MIT license](https://github.com/ionide/ionide-fake/blob/master/LICENSE.md),
 which allows modification and redistribution for both commercial and non-commercial purposes.
-
-## Code of Conduct
-
-This project adheres to No Code of Conduct. We are all adults. We accept everyone's contributions. Nothing else matters.
-
-For more information please visit the [No Code of Conduct](https://github.com/domgetter/NCoC) homepage.
