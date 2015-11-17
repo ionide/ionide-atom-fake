@@ -1,20 +1,20 @@
 # Ionide-FAKE
 
-Ionide-FAKE is part of the [Ionide](http://ionide.io) plugin suite, used for running FAKE build scripts without leaving an editor.
+Ionide-FAKE is part of the [Ionide](http://ionide.io) plugin suite, used for running FAKE build scripts without leaving the Atom editor.
 
 [![Join the chat at https://gitter.im/ionide/ionide-project](https://img.shields.io/badge/gitter-join%20chat%20%E2%86%92-brightgreen.svg?style=flat-square)](https://gitter.im/ionide/ionide-project?utm_source=share-link&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge) --  [Need Help? You can find us on Gitter](https://gitter.im/ionide/ionide-project)   
 
 
 ## Features
 
-- Run any build target defined in yoru project's FAKE build script
-- Panel in which you can display output of any FAKE build run in current Atom session ( including currently running builds)
+- Run any build target defined in your project's FAKE build script
+- Panel in which you can display output of any FAKE build run in the current Atom session (including currently running builds)
 
 ## Configuration
 
-Since version `1.1.0`, `ionide-fake` allows the user to override the default conventions used to find and run FAKE builds. To do so You need to create an `.ionide` file in the root folder of Your project opened by Atom. The configuration file uses the [TOML](https://github.com/toml-lang/toml) language.
+Since version `1.1.0`, `ionide-fake` allows to override the default conventions used to find and run FAKE builds. To do so, an `.ionide` file needs to be created in the root folder of the project in the current Atom session. The configuration file uses the [TOML](https://github.com/toml-lang/toml) language.
 
-Here is the default configuration values used if the `.ionide` file doesn't exist or some entry is missing:
+The default configuration values used if the `.ionide` file doesn't exist or some entry is missing are the following:
 
 ```TOML
 [Fake]
