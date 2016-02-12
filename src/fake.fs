@@ -58,7 +58,7 @@ module FakeService =
             taskListView |> Option.iter (fun (model, view) -> view.hide())
             startBuild packageDescription
         )
-        ListView.regiterListView stopChangingCallback cancelledCallback confirmedCallback viewForItem false
+        ListView.registerListView stopChangingCallback cancelledCallback confirmedCallback viewForItem false
 
     let private registerBuildList () =
         let stopChangingCallback (ev : IEditor) (lv : atom.SelectListView) = fun () -> ()
@@ -79,7 +79,7 @@ module FakeService =
                 setComponentEnabled(view, false)) |> unbox<Function>)
             ()
         )
-        ListView.regiterListView stopChangingCallback cancelledCallback confirmedCallback viewForItem false
+        ListView.registerListView stopChangingCallback cancelledCallback confirmedCallback viewForItem false
 
     let private BuildTask () =
         taskListView |> Option.iter(fun (model, view) ->
