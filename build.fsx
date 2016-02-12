@@ -24,7 +24,7 @@ open Fake.ZipHelper
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted
 let gitOwner = "Ionide"
-let gitHome = "https://github.com/" + gitOwner
+let gitHome  = "https://github.com/" + gitOwner
 
 // The name of the project on GitHub
 let gitName = "ionide-fake"
@@ -41,7 +41,33 @@ let releaseNotesData =
 
 let release = List.head releaseNotesData
 
-let apmTool = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) </> "atom" </> "bin" </> "apm.cmd"
+
+let run cmd args dir =
+    if execProcess( fun info ->
+        info.FileName <- cmd
+        if not( String.IsNullOrWhiteSpace dir) then
+            info.WorkingDirectory <- dir
+        info.Arguments <- args
+    ) System.TimeSpan.MaxValue = false then
+        traceError <| sprintf "Error while running '%s' with args: %s" cmd args
+
+//------------------------------------------
+// Atom & APM tools for the Commandline
+//------------------------------------------
+
+let apmTool =
+    #if MONO
+        "apm"
+    #else
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) </> "atom" </> "bin" </> "apm.cmd"
+    #endif
+
+let atomTool =
+    #if MONO
+        "atom"
+    #else
+        Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) </> "atom" </> "bin" </> "atom.cmd"
+    #endif
 
 // --------------------------------------------------------------------------------------
 // Build the Generator project and run it
@@ -49,7 +75,13 @@ let apmTool = Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicati
 
 Target "Clean" (fun _ ->
     CleanDir "temp/release"
+    DeleteDir @".fake"
+)
 
+// Copy the snippet definition file to the correct path for inclusion in the package
+Target "CopySnippets" (fun _ ->
+    DeleteDir @"release/snippets"
+    CopyDir @"release/snippets" @"src/snippets" (fun _->true)
 )
 
 Target "BuildGenerator" (fun () ->
@@ -59,29 +91,31 @@ Target "BuildGenerator" (fun () ->
 )
 
 Target "RunGenerator" (fun () ->
+    (TimeSpan.FromMinutes 5.0)
+    |> ProcessHelper.ExecProcess (fun p ->
+        p.FileName <- __SOURCE_DIRECTORY__ @@ "src" @@ "bin" @@ "Debug" @@ "Ionide.Fake.exe" )
+    |> ignore
+)
 
-        (TimeSpan.FromMinutes 5.0)
-        |> ProcessHelper.ExecProcess (fun p ->
-            p.FileName <- __SOURCE_DIRECTORY__ @@ "src" @@ "bin" @@ "Debug" @@ "Ionide.Fake.exe" )
-        |> ignore
-)
-#if MONO
-#else
 Target "RunScript" (fun () ->
-    Ionide.Paket.Generator.translateModules "../release/lib/fake.js"
+    #if MONO
+        ()
+    #else
+        Ionide.Paket.Generator.translateModules "../release/lib/fake.js"
+    #endif
 )
-#endif
 
 Target "InstallDependencies" (fun _ ->
-    let args = "install"
+    run apmTool "install" "release"
+)
 
-    let srcDir = "release"
-    let result =
-        ExecProcess (fun info ->
-            info.FileName <- apmTool
-            info.WorkingDirectory <- srcDir
-            info.Arguments <- args) System.TimeSpan.MaxValue
-    if result <> 0 then failwithf "Error during running apm with %s" args
+// This should not be the long term way to test out our packages
+// TODO switch this target to install to dev and launch atom in dev mode
+Target "TryPackage"( fun _ ->
+    killProcess "atom"
+    run apmTool "uninstall ionide-fake" ""
+    run apmTool "link" "release"
+    run atomTool __SOURCE_DIRECTORY__ ""
 )
 
 Target "TagDevelopBranch" (fun _ ->
@@ -93,7 +127,6 @@ Target "TagDevelopBranch" (fun _ ->
     Branches.tag "" tagName
     Branches.pushTag "" "origin" tagName
 )
-
 
 Target "PushToMaster" (fun _ ->
     CleanDir tempReleaseDir
@@ -117,12 +150,7 @@ Target "PushToMaster" (fun _ ->
 
 Target "Release" (fun _ ->
     let args = sprintf "publish %s" release.NugetVersion
-    let result =
-        ExecProcess (fun info ->
-            info.FileName <- apmTool
-            info.WorkingDirectory <- tempReleaseDir
-            info.Arguments <- args) System.TimeSpan.MaxValue
-    if result <> 0 then failwithf "Error during running apm with %s" args
+    run apmTool args tempReleaseDir
     DeleteDir "temp/release"
 )
 
@@ -144,9 +172,13 @@ Target "Default" DoNothing
 #endif
 
 "InstallDependencies"
-  ==> "Default"
-  ==> "TagDevelopBranch"
-  ==> "PushToMaster"
-  ==> "Release"
+    ==> "CopySnippets"
+    ==> "Default"
+    ==> "TagDevelopBranch"
+    ==> "PushToMaster"
+    ==> "Release"
+
+"CopySnippets"
+    ==> "TryPackage"
 
 RunTargetOrDefault "Default"

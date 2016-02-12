@@ -1,0 +1,296 @@
+# Atom snippets allow you to enter a simple prefix in the editor and hit tab to
+# expand the prefix into a larger code block with templated values.
+#
+# You can create a new snippet in this file by typing "snip" and then hitting
+# tab.
+#
+# An example CoffeeScript snippet to expand log to console.log:
+#
+# '.source.coffee':
+#   'Console log':
+#     'prefix': 'log'
+#     'body': 'console.log $1'
+#
+# This file uses CoffeeScript Object Notation (CSON).
+# If you are unfamiliar with CSON, you can read more about it here:
+# https://github.com/bevry/cson#what-is-cson
+
+# Snippets for any f# language filetype
+'.source.fsharp':
+  'Ionide Run Process Function':
+    'prefix': 'ionide-run'
+    'body': """
+        let run cmd args dir =
+            if execProcess( fun info ->
+                info.FileName <- cmd
+                if not( String.IsNullOrWhiteSpace dir) then
+                    info.WorkingDirectory <- dir
+                info.Arguments <- args
+            ) System.TimeSpan.MaxValue = false then
+                traceError <| sprintf "Error while running '%s' with args: %s" cmd args
+    """
+
+# Snippets Exclusively for F# Scripts
+'.source.fsharp.fsx':
+  'FAKE Bootstrap':
+    'prefix': 'fake-bootstrap'
+    'body': """
+        //------------------------------------------
+        // Paket Bootstrap and Package Restoration
+        //------------------------------------------
+
+        open System.Diagnostics
+        System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
+
+        let run cmd args dir =
+            let pinfo = ProcessStartInfo(cmd,args)
+            pinfo.WorkingDirectory <- dir; pinfo.UseShellExecute <- false; pinfo.RedirectStandardOutput <- true
+            let proc = Process.Start(pinfo)
+            proc.StandardOutput.ReadToEnd() |> printfn "< %s >\\\\n%s" cmd; proc.WaitForExit()
+
+        run @".paket\\\\paket.bootstrapper.exe" "" ""
+        run @".paket\\\\paket.exe" "restore -f" ""
+
+        //-------------------------
+        // FAKE Targets
+        //-------------------------
+
+        #r @"packages/Fake/tools/Fakelib.dll"
+        open Fake
+
+        Target "Default" DoNothing
+
+        match fsi.CommandLineArgs with
+        | [|filename|]  -> RunTargetOrDefault "Default"
+        | arr           -> RunTargetOrDefault arr.[1]
+    """
+
+  'FAKE Project Configuration Info':
+    'prefix': 'fake-project-info'
+    'body': """
+        // --------------------------------------------------------------------------
+        // Project Configuration Information used in NuGet and AssemblyInfo Targets
+        // --------------------------------------------------------------------------
+
+        let project = "$1"
+        let authors = ["$2"]
+        let summary = "$3"
+        let description = \\\"""
+            $4
+            \\\"""
+        let tags = "$5"
+        let solutionFile   = "$6"
+        let testAssemblies = "tests/**/bin/Release/*Tests*.dll"
+        let gitOwner = "$7"
+        let gitHome = "https://github.com/" + gitOwner
+        let gitName = "$8"
+        let gitRaw = environVarOrDefault "gitRaw" ("https://raw.githubusercontent.com/" + gitOwner)
+        let netFrameworks = ["$9"]
+        $10
+    """
+
+  'FAKE Build Frameworks Target':
+    'prefix': 'fake-build-frameworks-target'
+    'body': """
+        Target "Build"( fun _ ->
+            netFrameworks
+            |> List.iter( fun framework ->
+                let outputPath = buildDir </> framework
+                !! (project + ".sln")
+                |> MSBuild outputPath "Build" ["Configuration","Release"; "TargetFrameworkVersion", framework]
+                |> Log (".NET " + framework + " Build-Output: "))
+        )
+    """
+
+  'FAKE Clean Target':
+    'prefix': 'fake-clean-target'
+    'body': """
+        Target "Clean"( fun _ ->
+            CleanDirs ["${1:bin}"]
+        )
+        $2
+    """
+
+  'FAKE Clean Docs Target':
+    'prefix': 'fake-doc-clean'
+    'body': """
+        Target "CleanDocs"( fun _ ->
+            CleanDirs ["docs/output"]
+        )
+    """
+
+  'FAKE NUnit Test Target':
+    'prefix': 'fake-test-nunit-target'
+    'body': """
+        // --------------------------------------------------------------------------------------
+        // Evaluate Test Assemblies using the NUnit Runner
+
+        Target "RunTests"( fun _ ->
+            !! testAssemblies
+            |> NUnit (fun p ->
+                { p with
+                    DisableShadowCopy = true
+                    TimeOut = TimeSpan.FromMinutes 20.
+                    OutputFile = "bin/TestResults.xml" })
+        )
+    """
+
+  'FAKE XUnit Test Target':
+    'prefix': 'fake-test-xunit-target'
+    'body': """
+        // --------------------------------------------------------------------------------------
+        // Evaluate Test Assemblies using the XUnit Runner
+
+        Target "RunTests"( fun _ ->
+            !! testAssemblies
+            |> xUnit( fun p ->
+                    { p with
+                        ToolPath = "packages/xunit.runners/tools/xunit.console.clr4.exe"
+                        ShadowCopy = false })
+        )
+    """
+
+
+  'FAKE Generate Docs Target':
+    'prefix': 'fake-doc-gen'
+    'body': """
+        // --------------------------------------------------------------------------------------
+        // Generate the documentation
+
+        Target "GenerateDocs"( fun _ ->
+            executeFSIWithArgs "docs/tools" "generate.fsx" ["--define:RELEASE"] [] |> ignore
+        )
+    """
+
+  'FAKE Watch Docs Target':
+    'prefix': 'fake-doc-watch'
+    'body': """
+        Target "WatchDocs"( fun _ ->
+            if not <| executeFSIWithArgs "docs/tools" "generate.fsx" ["--define:WATCH"] [] then
+              failwith "generating reference documentation failed"
+        )
+    """
+
+  'FAKE Publish Docs Target':
+    'prefix': 'fake-doc-publish'
+    'body': """
+        // --------------------------------------------------------------------------------------
+        // Publish Documentation to Github Pages Branch
+
+        Target "ReleaseDocs"( fun _ ->
+            let tempDocsDir = "temp/gh-pages"
+            if not (System.IO.Directory.Exists tempDocsDir) then
+                Repository.cloneSingleBranch "" (gitHome + "/" + gitName + ".git") "gh-pages" tempDocsDir
+
+            fullclean tempDocsDir
+            CopyRecursive "docs/output" "temp/gh-pages" true |> printfn "%A"
+            StageAll tempDocsDir
+            Commit tempDocsDir (sprintf "Update generated documentation for version %s" buildVersion)
+            Branches.push "temp/gh-pages"
+        )
+    """
+
+  'FAKE Sourcelink Target':
+    'prefix': 'fake-sourcelink'
+    'body': """
+        // --------------------------------------------------------------------------------------
+        // SourceLink allows Source Indexing on the PDB generated by the compiler, this allows
+        // the ability to step through the source code of external libraries https://github.com/ctaggart/SourceLink
+
+        Target "SourceLink"( fun _ ->
+        #if MONO
+            ()
+        #else
+            let baseUrl = sprintf "%s/%s/{0}/%%var2%%" gitRaw (project.ToLower())
+            use repo = new GitRepo(__SOURCE_DIRECTORY__)
+            !! "src/**/*.fsproj"
+            |> Seq.iter (fun f ->
+                let proj = VsProj.LoadRelease f
+                logfn "source linking %s" proj.OutputFilePdb
+                let files = proj.Compiles -- "**/AssemblyInfo.fs"
+                repo.VerifyChecksums files
+                proj.VerifyPdbChecksums files
+                proj.CreateSrcSrv baseUrl repo.Revision (repo.Paths files)
+                Pdbstr.exec proj.OutputFilePdb proj.OutputFilePdbSrcSrv
+            )
+        #endif
+        )
+    """
+
+  'FAKE Nuget Target':
+    'prefix': 'fake-nuget-target'
+    'body': """
+        // Read additional information from the release notes document
+        let release = LoadReleaseNotes (__SOURCE_DIRECTORY__ + "/RELEASE_NOTES.md")
+
+        let isAppVeyorBuild   = buildServer = BuildServer.AppVeyor
+        let isVersionTag tag  = Version.TryParse tag |> fst
+        let hasRepoVersionTag = isAppVeyorBuild && AppVeyorEnvironment.RepoTag && isVersionTag AppVeyorEnvironment.RepoTagName
+        let assemblyVersion   = if hasRepoVersionTag then AppVeyorEnvironment.RepoTagName else release.NugetVersion
+        let buildDate         = DateTime.UtcNow
+        let buildVersion =
+            if hasRepoVersionTag then assemblyVersion
+            else if isAppVeyorBuild then sprintf "%s-b%s" assemblyVersion AppVeyorEnvironment.BuildNumber
+            else assemblyVersion
+
+        Target "BuildVersion"( fun _ ->
+            Shell.Exec("appveyor", sprintf "UpdateBuild -Version \"%s\"" buildVersion) |> ignore
+        )
+
+        // --------------------------------------------------------------------------------------
+        // Build a NuGet package
+
+        Target "NuGet"( fun _ ->
+            NuGet( fun p ->
+                { p with
+                    Authors      = authors
+                    Project      = project
+                    Summary      = summary
+                    Description  = description
+                    Version      = buildVersion
+                    ReleaseNotes = release.Notes |> toLines
+                    Tags         = tags
+                    OutputPath   = buildDir
+                    AccessKey    = getBuildParamOrDefault "nugetkey" ""
+                    Publish      = hasBuildParam "nugetkey" })
+                ("nuget/" + project + ".nuspec")
+        )
+    """
+
+  'Ionide Tools - atom & apm ':
+    'prefix': 'ionide-atom-tools'
+    'body': """
+        let apmTool =
+            #if MONO
+                "apm"
+            #else
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) </> "atom" </> "bin" </> "apm.cmd"
+            #endif
+
+        let atomTool =
+            #if MONO
+                "atom"
+            #else
+                Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) </> "atom" </> "bin" </> "atom.cmd"
+            #endif
+    """
+
+  'Ionide InstallDependencies Target':
+    'prefix': 'ionide-dependencies'
+    'body': """
+        Target "InstallDependencies" (fun _ ->
+            run apmTool "install" "release"
+        )
+    """
+
+  'Ionide TryPackage Target':
+    'prefix': 'ionide-trypackage'
+    'body': """
+        Target "TryPackage"( fun _ ->
+            killProcess "atom"
+            run apmTool "uninstall $1" ""
+            run apmTool "link" "release"
+            run atomTool __SOURCE_DIRECTORY__ ""
+        )
+        $2
+    """

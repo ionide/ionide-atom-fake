@@ -38,6 +38,8 @@ typings/FunScript.TypeScript/Output
 typings/FunScript.TypeScript/Types.zip
 typings/FunScript.TypeScript/*.txt
 
+/.ionide.debug
+
 .DS_Store
 src/bin/
 src/obj/
