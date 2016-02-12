@@ -1,7 +1,7 @@
 NUGET
   remote: https://www.nuget.org/api/v2
   specs:
-    FAKE (4.4.1)
+    FAKE (4.20.0)
     FunScript (1.1.94)
 GIT
   remote: git@github.com:ionide/ionide-helpers.git
