@@ -1,3 +1,5 @@
+## [Project is deprecated, we suggest to use VSCode version of Ionide instead]
+
 # Ionide-FAKE
 
 Ionide-FAKE is part of the [Ionide](http://ionide.io) plugin suite, used for running FAKE build scripts without leaving the Atom editor.
